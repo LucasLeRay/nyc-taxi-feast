@@ -10,7 +10,7 @@ from src.config import config
 DATA_FOLDER = Path(__file__).parents[1] / "data"
 NYC_TAXI_DATASET_FILENAME = "nyc-taxi-2015.csv"
 
-SAMPLE_COUNT = 10_000  # Number of rows to upload to warehouse
+SAMPLE_COUNT = 1_000  # Number of rows to upload to warehouse
 
 
 def main():
