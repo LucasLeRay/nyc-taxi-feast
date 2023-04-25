@@ -14,7 +14,7 @@ class _Config:
             load_dotenv(ENV_PATH)
 
         self.snowflake_connector = SimpleNamespace(
-            deployment_url=os.environ["SNOWFLAKE_DEPLOYMENT_URL"],
+            account=os.environ["SNOWFLAKE_ACCOUNT"],
             user=os.environ["SNOWFLAKE_USER"],
             password=os.environ["SNOWFLAKE_PASSWORD"],
             role=os.environ["SNOWFLAKE_ROLE"],
@@ -23,7 +23,7 @@ class _Config:
             schema=os.environ["SNOWFLAKE_SCHEMA"],
         )
 
-        self.trips_table_name = "nyc_taxi_trips"
+        self.trips_source_table = "nyc_taxi_trips"
 
 
 config = _Config()

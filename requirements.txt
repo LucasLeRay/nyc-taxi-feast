@@ -5,3 +5,4 @@ python-dotenv==1.0.0
 pandas==2.0.1
 snowflake-sqlalchemy==1.4.7
 SQLAlchemy==1.4.47
+feast==0.31.1
