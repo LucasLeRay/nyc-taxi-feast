@@ -10,6 +10,8 @@ from src.config import config
 DATA_FOLDER = Path(__file__).parents[1] / "data"
 NYC_TAXI_DATASET_FILENAME = "nyc-taxi-2015.csv"
 
+SAMPLE_COUNT = 10_000  # Number of rows to upload to warehouse
+
 
 def main():
     engine = get_snowflake_engine()
@@ -19,7 +21,7 @@ def main():
 
 def get_dataset() -> pd.DataFrame:
     nyc_taxi_data_path = DATA_FOLDER / NYC_TAXI_DATASET_FILENAME
-    return pd.read_csv(nyc_taxi_data_path).sample(n=10_000)
+    return pd.read_csv(nyc_taxi_data_path).sample(n=SAMPLE_COUNT)
 
 
 def get_snowflake_engine() -> Engine:
@@ -28,7 +30,7 @@ def get_snowflake_engine() -> Engine:
         drivername="snowflake",
         username=connector.user,
         password=connector.password,
-        host=connector.deployment_url,
+        host=connector.account,
         database=connector.database,
         query={
             "warehouse": connector.warehouse,
@@ -45,7 +47,7 @@ def get_snowflake_engine() -> Engine:
 
 def upload_data(data: pd.DataFrame, engine: Engine):
     data.to_sql(
-        name=config.trips_data_name,
+        name=config.trips_source_table,
         con=engine,
         if_exists="replace",
         index=False,
