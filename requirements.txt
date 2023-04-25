@@ -1,2 +1,7 @@
 flake8==3.9.2
 isort==5.12.0
+snowflake-connector-python==3.0.3
+python-dotenv==1.0.0
+pandas==2.0.1
+snowflake-sqlalchemy==1.4.7
+SQLAlchemy==1.4.47
