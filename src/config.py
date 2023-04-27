@@ -23,7 +23,7 @@ class _Config:
             schema=os.environ["SNOWFLAKE_SCHEMA"],
         )
 
-        self.trips_source_table = "nyc_taxi_trips"
+        self.weather_source_table = "nyc_taxi_weather"
 
 
 config = _Config()

@@ -8,9 +8,7 @@ from sqlalchemy.engine.base import Engine
 from src.config import config
 
 DATA_FOLDER = Path(__file__).parents[1] / "data"
-NYC_TAXI_DATASET_FILENAME = "nyc-taxi-2015.csv"
-
-SAMPLE_COUNT = 1_000  # Number of rows to upload to warehouse
+NYC_TAXI_DATASET_FILENAME = "nyc-weather-2015.csv"
 
 
 def main():
@@ -20,8 +18,7 @@ def main():
 
 
 def get_dataset() -> pd.DataFrame:
-    nyc_taxi_data_path = DATA_FOLDER / NYC_TAXI_DATASET_FILENAME
-    return pd.read_csv(nyc_taxi_data_path).sample(n=SAMPLE_COUNT)
+    return pd.read_csv(DATA_FOLDER / NYC_TAXI_DATASET_FILENAME)
 
 
 def get_snowflake_engine() -> Engine:
@@ -47,7 +44,7 @@ def get_snowflake_engine() -> Engine:
 
 def upload_data(data: pd.DataFrame, engine: Engine):
     data.to_sql(
-        name=config.trips_source_table,
+        name=config.weather_source_table,
         con=engine,
         if_exists="replace",
         index=False,
