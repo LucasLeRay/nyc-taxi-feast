@@ -12,7 +12,7 @@ from src.feature_store.names import FView, TripsFeatures
 weather_source = SnowflakeSource(
     table=config.weather_source_table,
     timestamp_field=WeatherSource.DATE,
-    created_timestamp_column="created"
+    created_timestamp_column="CREATED"
 )
 
 trip_input = RequestSource(

@@ -1,4 +1,4 @@
-from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 from sqlalchemy import create_engine
@@ -6,19 +6,13 @@ from sqlalchemy.engine import URL
 from sqlalchemy.engine.base import Engine
 
 from src.config import config
-
-DATA_FOLDER = Path(__file__).parents[1] / "data"
-NYC_TAXI_DATASET_FILENAME = "nyc-weather-2015.csv"
+from src.data import get_weather_dataset
 
 
 def main():
     engine = get_snowflake_engine()
-    data = get_dataset()
+    data = get_weather_dataset().assign(created=datetime.now())
     upload_data(data, engine=engine)
-
-
-def get_dataset() -> pd.DataFrame:
-    return pd.read_csv(DATA_FOLDER / NYC_TAXI_DATASET_FILENAME)
 
 
 def get_snowflake_engine() -> Engine:

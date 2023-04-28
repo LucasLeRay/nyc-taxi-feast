@@ -1,11 +1,11 @@
 import os
-from pathlib import Path
 from types import SimpleNamespace
 
 from dotenv import load_dotenv
 
-ROOT_PATH = Path(__file__).parents[1]
-ENV_PATH = ROOT_PATH / ".env"
+from src.directories import directories
+
+ENV_PATH = directories.root_dir / ".env"
 
 
 class _Config:
@@ -23,7 +23,15 @@ class _Config:
             schema=os.environ["SNOWFLAKE_SCHEMA"],
         )
 
+        self.data_path = SimpleNamespace(
+            trips=directories.data_dir / "nyc-taxi-2015.csv",
+            weather=directories.data_dir / "nyc-weather-2015.csv",
+        )
+
         self.weather_source_table = "NYC_TAXI_WEATHER"
+
+        self.test_size = .2
+        self.target = "duration"
 
 
 config = _Config()

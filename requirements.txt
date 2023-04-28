@@ -6,3 +6,4 @@ pandas==2.0.1
 snowflake-sqlalchemy==1.4.7
 SQLAlchemy==1.4.47
 feast==0.31.1
+scikit-learn==1.2.2
