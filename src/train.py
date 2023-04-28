@@ -4,7 +4,6 @@ import pandas as pd
 from feast import FeatureStore
 
 from src.columns import TripsSource
-from src.config import config
 from src.data import get_trips_dataset, train_test_split
 from src.directories import directories
 from src.feature_store.names import FView, TripsFeatures
@@ -36,7 +35,7 @@ def fetch_features(
         store
         .get_historical_features(dataset, features=FEATURES_TO_USE)
         .to_df()
-    )
+    )[FEATURES_COLS]
 
 
 def main():
@@ -44,7 +43,6 @@ def main():
     train_set, test_set = (
         get_trips_dataset()
         .assign(**{
-            config.target: _compute_target,
             # 'event_timestamp' is assigned for point-in-time join
             "event_timestamp": lambda x: x[TripsSource.PICKUP_DATETIME]
         })
@@ -53,19 +51,18 @@ def main():
     )
     logger.info(f"Train shape:{train_set.shape}, test shape:{test_set.shape}")
 
+    logger.info("Computing targets (trip duration)...")
+    train_target = _compute_target(train_set)  # noqa: F841
+    test_target = _compute_target(test_set)  # noqa: F841
+
     feature_store = FeatureStore(repo_path=directories.features_repo_dir)
 
     logger.info("Fetching features for training set...")
-    train_features = fetch_features(
-        train_set.drop(columns=[config.target]), store=feature_store
-    )[FEATURES_COLS]
+    train_features = fetch_features(train_set, store=feature_store)
     logger.info(f"Train features: {train_features.head()}")
 
     logger.info("Fetching features for testing set...")
-    test_features = fetch_features(
-        test_set.drop(columns=[config.target]),
-        store=feature_store
-    )[FEATURES_COLS]
+    test_features = fetch_features(test_set, store=feature_store)
     logger.info(f"Test features: {test_features.head()}")
 
     logger.warning("Rest of the pipeline is not yet implemented")
