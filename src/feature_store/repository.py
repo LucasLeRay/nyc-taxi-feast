@@ -3,7 +3,7 @@ from datetime import timedelta
 import pandas as pd
 from feast import FeatureView, Field, RequestSource, SnowflakeSource
 from feast.on_demand_feature_view import on_demand_feature_view
-from feast.types import Float32, Int64, UnixTimestamp
+from feast.types import Float32, Float64, Int64, UnixTimestamp
 
 from src.columns import TripsSource, WeatherSource
 from src.config import config
@@ -23,6 +23,7 @@ trip_input = RequestSource(
         Field(name=TripsSource.PICKUP_LONGITUDE, dtype=Float32),
         Field(name=TripsSource.DROPOFF_LATITUDE, dtype=Float32),
         Field(name=TripsSource.DROPOFF_LONGITUDE, dtype=Float32),
+        Field(name=TripsSource.TRIP_DISTANCE, dtype=Float32),
     ],
 )
 
@@ -53,3 +54,13 @@ weather = FeatureView(
     ],
     source=weather_source
 )
+
+
+@on_demand_feature_view(
+    sources=[trip_input],
+    schema=[Field(name=TripsFeatures.DISTANCE, dtype=Float64)]
+)
+def distance(source: pd.DataFrame) -> pd.DataFrame:
+    return pd.DataFrame({
+        TripsFeatures.DISTANCE: source[TripsSource.TRIP_DISTANCE],
+    })

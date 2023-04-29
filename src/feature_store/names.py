@@ -9,8 +9,8 @@ class TripsFeatures(StrEnum):
     PICKUP_HOUR = auto()
     PICKUP_DAY = auto()
     PICKUP_MONTH = auto()
-    # It seems that it's not possible to rename a field, so the same as
-    # weather dataset is used.
+    DISTANCE = auto()
+    # It seems that it's not possible to rename a field
     MIN_TEMPERATURE = WeatherSource.TMIN
     MAX_TEMPERATURE = WeatherSource.TMAX
 

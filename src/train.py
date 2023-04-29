@@ -12,6 +12,7 @@ from src.feature_store.names import FView, TripsFeatures
 FEATURES_TO_USE = [
     f"{FView.TEMPERATURE}:{TripsFeatures.MIN_TEMPERATURE}",
     f"{FView.TEMPERATURE}:{TripsFeatures.MAX_TEMPERATURE}",
+    f"distance:{TripsFeatures.DISTANCE}",
     f"pickup_time_features:{TripsFeatures.PICKUP_HOUR}",
     f"pickup_time_features:{TripsFeatures.PICKUP_DAY}",
     f"pickup_time_features:{TripsFeatures.PICKUP_MONTH}",
