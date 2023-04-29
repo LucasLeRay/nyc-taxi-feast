@@ -1,15 +1,21 @@
 import logging
+from datetime import datetime
+from typing import Tuple
 
 import pandas as pd
 from feast import FeatureStore
+from sklearn.base import BaseEstimator
 
 from src.columns import TripsSource
+from src.config import config
 from src.data import get_trips_dataset, train_test_split
 from src.directories import directories
 from src.feature_store.names import FView, TripsFeatures
+from src.metrics import compute_metrics
+from src.model import get_model, push_model
 
 # All features are used
-FEATURES_TO_USE = [
+_FEATURES_TO_USE = [
     f"{FView.TEMPERATURE}:{TripsFeatures.MIN_TEMPERATURE}",
     f"{FView.TEMPERATURE}:{TripsFeatures.MAX_TEMPERATURE}",
     f"distance:{TripsFeatures.DISTANCE}",
@@ -17,9 +23,51 @@ FEATURES_TO_USE = [
     f"pickup_time_features:{TripsFeatures.PICKUP_DAY}",
     f"pickup_time_features:{TripsFeatures.PICKUP_MONTH}",
 ]
-FEATURES_COLS = list(map(lambda x: x.split(":")[1], FEATURES_TO_USE))
+FEATURES_COLS = list(map(lambda x: x.split(":")[1], _FEATURES_TO_USE))
+
+MODEL_NAME = datetime.now().strftime("%Y%m%d_%H%M")
 
 logger = logging.getLogger(__name__)
+
+
+def main():
+    logger.info("Building training subsets...")
+    train_set, test_set = _get_datasets()
+    logger.info(f"Train shape:{train_set.shape}, test shape:{test_set.shape}")
+
+    logger.info(f"Computing targets ({config.target})...")
+    train_y, test_y = _compute_target(train_set), _compute_target(test_set)
+
+    logger.info("Fetching features...")
+    train_features, test_features = _get_features(train_set, test_set)
+    logger.info(
+        f"Train features: {train_features.head()}"
+        f"Test features: {test_features.head()}"
+    )
+
+    logger.info("Training features...")
+    model = _train_model(get_model(), features=train_features, target=train_y)
+
+    logger.info("Evaluating model...")
+    metrics = compute_metrics(model, features=test_features, target=test_y)
+    logger.info(f"Metrics are: {metrics}")
+
+    logger.info("Saving model...")
+    path = push_model(model, metrics=metrics, name=MODEL_NAME)
+    logger.info(f"Model saved, path: '{path}'")
+
+
+def _get_datasets() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Get training & testing subsets"""
+    return (
+        get_trips_dataset()
+        .assign(**{
+            # 'event_timestamp' is assigned for point-in-time join
+            "event_timestamp": lambda x: x[TripsSource.PICKUP_DATETIME]
+        })
+        .sort_values(TripsSource.PICKUP_DATETIME)
+        .pipe(train_test_split)
+    )
 
 
 def _compute_target(data: pd.DataFrame) -> pd.Series:
@@ -29,41 +77,33 @@ def _compute_target(data: pd.DataFrame) -> pd.Series:
     ).dt.seconds
 
 
-def fetch_features(
+def _get_features(train_set, test_set):
+    """Get features of subsets from feature store"""
+    feature_store = FeatureStore(repo_path=directories.features_repo_dir)
+
+    return (
+        _fetch_features(train_set, store=feature_store),
+        _fetch_features(test_set, store=feature_store)
+    )
+
+
+def _fetch_features(
     dataset: pd.DataFrame, *, store: FeatureStore
 ) -> pd.DataFrame:
-    return (
+    features = (
         store
-        .get_historical_features(dataset, features=FEATURES_TO_USE)
+        .get_historical_features(dataset, features=_FEATURES_TO_USE)
         .to_df()
     )[FEATURES_COLS]
 
+    # Columns are typed as string as column names can have 'TripsFeatures' type
+    features.columns = features.columns.astype(str)
 
-def main():
-    logger.info("Building training subsets...")
-    train_set, test_set = (
-        get_trips_dataset()
-        .assign(**{
-            # 'event_timestamp' is assigned for point-in-time join
-            "event_timestamp": lambda x: x[TripsSource.PICKUP_DATETIME]
-        })
-        .sort_values(TripsSource.PICKUP_DATETIME)
-        .pipe(train_test_split)
-    )
-    logger.info(f"Train shape:{train_set.shape}, test shape:{test_set.shape}")
+    return features
 
-    logger.info("Computing targets (trip duration)...")
-    train_target = _compute_target(train_set)  # noqa: F841
-    test_target = _compute_target(test_set)  # noqa: F841
 
-    feature_store = FeatureStore(repo_path=directories.features_repo_dir)
-
-    logger.info("Fetching features for training set...")
-    train_features = fetch_features(train_set, store=feature_store)
-    logger.info(f"Train features: {train_features.head()}")
-
-    logger.info("Fetching features for testing set...")
-    test_features = fetch_features(test_set, store=feature_store)
-    logger.info(f"Test features: {test_features.head()}")
-
-    logger.warning("Rest of the pipeline is not yet implemented")
+def _train_model(
+    model: BaseEstimator, *, features: pd.DataFrame, target: pd.Series
+):
+    """Train model from features"""
+    return model.fit(features, target)

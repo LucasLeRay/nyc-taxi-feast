@@ -4,6 +4,9 @@ feature_registry
 # Datasets
 data/
 
+# Artefacts
+artefacts/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
