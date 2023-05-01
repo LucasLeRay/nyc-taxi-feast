@@ -10,20 +10,9 @@ from src.columns import TripsSource
 from src.config import config
 from src.data import get_trips_dataset, train_test_split
 from src.directories import directories
-from src.feature_store.names import FView, TripsFeatures
+from src.feature_store.names import FService, TripsFeatures
 from src.metrics import compute_metrics
 from src.model import get_model, push_model
-
-# All features are used
-_FEATURES_TO_USE = [
-    f"{FView.TEMPERATURE}:{TripsFeatures.MIN_TEMPERATURE}",
-    f"{FView.TEMPERATURE}:{TripsFeatures.MAX_TEMPERATURE}",
-    f"distance:{TripsFeatures.DISTANCE}",
-    f"pickup_time_features:{TripsFeatures.PICKUP_HOUR}",
-    f"pickup_time_features:{TripsFeatures.PICKUP_DAY}",
-    f"pickup_time_features:{TripsFeatures.PICKUP_MONTH}",
-]
-FEATURES_COLS = list(map(lambda x: x.split(":")[1], _FEATURES_TO_USE))
 
 MODEL_NAME = datetime.now().strftime("%Y%m%d_%H%M")
 
@@ -90,13 +79,14 @@ def _get_features(train_set, test_set):
 def _fetch_features(
     dataset: pd.DataFrame, *, store: FeatureStore
 ) -> pd.DataFrame:
+    features_service = store.get_feature_service(FService.TRIP_INFOS)
+
     features = (
         store
-        .get_historical_features(dataset, features=_FEATURES_TO_USE)
+        .get_historical_features(dataset, features=features_service)
         .to_df()
-    )[FEATURES_COLS]
+    )[list(TripsFeatures)]
 
-    # Columns are typed as string as column names can have 'TripsFeatures' type
     features.columns = features.columns.astype(str)
 
     return features

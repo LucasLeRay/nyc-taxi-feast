@@ -18,3 +18,8 @@ class TripsFeatures(StrEnum):
 class FView(StrEnum):
     """Feature Views registered into store"""
     TEMPERATURE = auto()
+
+
+class FService(StrEnum):
+    """Feature Services registered into store"""
+    TRIP_INFOS = auto()

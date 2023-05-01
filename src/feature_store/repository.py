@@ -1,13 +1,14 @@
 from datetime import timedelta
 
 import pandas as pd
-from feast import FeatureView, Field, RequestSource, SnowflakeSource
+from feast import (FeatureService, FeatureView, Field, RequestSource,
+                   SnowflakeSource)
 from feast.on_demand_feature_view import on_demand_feature_view
 from feast.types import Float32, Float64, Int64, UnixTimestamp
 
 from src.columns import TripsSource, WeatherSource
 from src.config import config
-from src.feature_store.names import FView, TripsFeatures
+from src.feature_store.names import FService, FView, TripsFeatures
 
 weather_source = SnowflakeSource(
     table=config.weather_source_table,
@@ -64,3 +65,13 @@ def distance(source: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame({
         TripsFeatures.DISTANCE: source[TripsSource.TRIP_DISTANCE],
     })
+
+
+trip_infos = FeatureService(
+    name=FService.TRIP_INFOS,
+    features=[
+        weather,
+        distance,
+        pickup_time_features
+    ],
+)

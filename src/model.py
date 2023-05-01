@@ -25,3 +25,14 @@ def push_model(model: BaseEstimator, *, metrics: Dict, name: str) -> Path:
     path = (directories.artefacts_dir / f"{name}.pkl").resolve()
     joblib.dump(model, path)
     return path
+
+
+def pull_model(name: str) -> BaseEstimator:
+    """
+    Load model from local artefacts.
+
+    As with 'push_model', this function would ideally pull model from a model
+    registry, eventually taking a version number and, as default, getting
+    the best performing model.
+    """
+    return joblib.load((directories.artefacts_dir / f"{name}.pkl").resolve())
